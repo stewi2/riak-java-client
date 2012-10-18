@@ -103,7 +103,7 @@ public abstract class ITestMapReduce {
     @Test public void doLinkMapReduce() throws RiakException {
         MapReduceResult result = client.mapReduce(BUCKET_NAME)
         .addLinkPhase(BUCKET_NAME, "test")
-        .addMapPhase(new NamedJSFunction("Riak.mapValuesJson"))
+        .addMapPhase(NamedErlangFunction.MAP_OBJECT_VALUE)
         .addReducePhase(new NamedErlangFunction("riak_kv_mapreduce", "reduce_sort"))
         .execute();
 
