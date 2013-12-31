@@ -70,7 +70,7 @@ public class RiakNode implements RiakResponseListener
     private volatile long idleTimeoutInNanos;
     private volatile int connectionTimeout;
     private volatile boolean blockOnMaxConnections;
-
+    private volatile HealthCheck healthCheck;
 
     private volatile int readTimeoutInMillis;
 
@@ -181,6 +181,14 @@ public class RiakNode implements RiakResponseListener
             permits = new Sync(builder.maxConnections);
         }
 
+        if (builder.healthCheck == null)
+        {
+            healthCheck = new HealthCheck();
+        }
+        else
+        {
+            healthCheck = builder.healthCheck;
+        }
 
         this.state = State.CREATED;
     }
@@ -987,52 +995,111 @@ public class RiakNode implements RiakResponseListener
             if ((state == State.RUNNING && recentlyClosed.size() > 4) ||
                 state == State.HEALTH_CHECKING)
             {
-                checkHealth();
+                tryHealthCheck();
+            }
+        }
+
+        private void tryHealthCheck()
+        {
+            HealthCheck.HealthCheckResults results = null;
+
+            try
+            {
+                // See: doGetConnection() - this will purge closed
+                // connections from the available queue and either
+                // return/create a new one (meaning the node is up) or throw
+                // an exception if a connection can't be made.
+                Channel c = doGetConnection();
+
+                results = healthCheck.checkHealth(c);
+
+                closeConnection(c);
+
+                if (state == State.HEALTH_CHECKING)
+                {
+                    logger.info("RiakNode recovered; {}:{}", remoteAddress, port);
+                    state = State.RUNNING;
+                    notifyStateListeners();
+                }
+
+            }
+            catch (ConnectionFailedException ex)
+            {
+                if (state == State.RUNNING)
+                {
+                    logger.error("RiakNode offline; health checking; {}:{} {}",
+                            remoteAddress, port, ex);
+                    state = State.HEALTH_CHECKING;
+                    notifyStateListeners();
+                }
+                else
+                {
+                    logger.error("RiakNode failed health check; {}:{} {}",
+                            remoteAddress, port, ex);
+                }
+            }
+            catch (IllegalStateException e)
+            {
+                // no-op; there's a race condition where the bootstrap is shutting down
+                // right when a healthcheck occurs and netty will throw this
+            }
+
+            if(results != null)
+            {
+                // TODO: Cry about it here
             }
         }
     }
 
-    private void checkHealth()
+    public class HealthCheck
     {
-        try
+        public class HealthCheckResults
         {
-            // See: doGetConnection() - this will purge closed
-            // connections from the available queue and either 
-            // return/create a new one (meaning the node is up) or throw
-            // an exception if a connection can't be made.
-            Channel c = doGetConnection();
-            closeConnection(c);
+            private Boolean success;
+            private String errorMessage;
+            private Exception exception;
 
-            if (state == State.HEALTH_CHECKING)
+            public HealthCheckResults()
             {
-                logger.info("RiakNode recovered; {}:{}", remoteAddress, port);
-                state = State.RUNNING;
-                notifyStateListeners();
+                this.success = true;
             }
 
-        }
-        catch (ConnectionFailedException ex)
-        {
-            if (state == State.RUNNING)
-            {
-                logger.error("RiakNode offline; health checking; {}:{} {}",
-                    remoteAddress, port, ex);
-                state = State.HEALTH_CHECKING;
-                notifyStateListeners();
+            public HealthCheckResults(Boolean success, String errorMessage, Exception exception) {
+                this.success = success;
+                this.errorMessage = errorMessage;
+                this.exception = exception;
             }
-            else
+
+            public Boolean getSuccess()
             {
-                logger.error("RiakNode failed health check; {}:{} {}",
-                    remoteAddress, port, ex);
+                return success;
             }
-        }
-        catch (IllegalStateException e)
-        {
-            // no-op; there's a race condition where the bootstrap is shutting down
-            // right when a healthcheck occurs and netty will throw this
+
+            public String getErrorMessage()
+            {
+                return errorMessage;
+            }
+
+            public Exception getException()
+            {
+                return exception;
+            }
         }
 
+        public HealthCheckResults checkHealth(Channel c)
+        {
+            // Default is no-op, as long as we connected we're good
+            return new HealthCheckResults();
+        }
+    }
 
+    public class PingHealthCheck extends HealthCheck
+    {
+        public HealthCheckResults checkHealth(Channel c)
+        {
+            // TODO: hit ping endpoint, set results
+            return new HealthCheckResults();
+        }
     }
 
     private class ShutdownTask implements Runnable
@@ -1117,7 +1184,7 @@ public class RiakNode implements RiakResponseListener
         private Bootstrap bootstrap;
         private ScheduledExecutorService executor;
         private boolean blockOnMaxConnections;
-
+        private HealthCheck healthCheck;
 
         /**
          * Default constructor. Returns a new builder for a RiakNode with
@@ -1285,6 +1352,12 @@ public class RiakNode implements RiakResponseListener
         public Builder withBlockOnMaxConnections(boolean block)
         {
             this.blockOnMaxConnections = block;
+            return this;
+        }
+
+        public Builder withHealthCheck(HealthCheck healthCheck)
+        {
+            this.healthCheck = healthCheck;
             return this;
         }
         
