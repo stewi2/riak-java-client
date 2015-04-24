@@ -491,7 +491,6 @@ public class DefaultRiakObject implements IRiakObject {
         return this;
     }
     
-    @Override
     public boolean isDeleted() {
         return this.isDeleted;
     }

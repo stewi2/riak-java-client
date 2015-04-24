@@ -71,6 +71,7 @@ public class HTTPRiakClientFactory implements RiakClientFactory {
         riakConfig.setMaxConnections(config.getMaxConnections());
         riakConfig.setTimeout(config.getTimeout());
         riakConfig.setRetryHandler(config.getRetryHandler());
+        riakConfig.setEnableCompression(config.getEnableCompression());
 
         return new HTTPClientAdapter(new RiakClient(riakConfig));
     }

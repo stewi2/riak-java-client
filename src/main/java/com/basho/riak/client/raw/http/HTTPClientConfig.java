@@ -36,6 +36,7 @@ public class HTTPClientConfig implements Configuration {
 	private final Integer timeout;
 	private final Integer maxConnections;
 	private final HttpRequestRetryHandler retryHandler;
+    private final boolean enableCompression;
 
 	/**
 	 * Create a new instance, use the {@link Builder}
@@ -57,7 +58,8 @@ public class HTTPClientConfig implements Configuration {
 	 *            used by the underlying {@link HttpClient}
 	 */
 	private HTTPClientConfig(String url, String mapreducePath, HttpClient httpClient, Integer timeout,
-							 Integer maxConnections, HttpRequestRetryHandler retryHandler) {
+							 Integer maxConnections, HttpRequestRetryHandler retryHandler,
+							 boolean enableCompression) {
 		try {
 			this.uri = new URI(url);
 		} catch (URISyntaxException e) {
@@ -69,6 +71,7 @@ public class HTTPClientConfig implements Configuration {
 		this.timeout = timeout;
 		this.maxConnections = maxConnections;
 		this.retryHandler = retryHandler;
+		this.enableCompression = enableCompression;
 	}
 
 	/**
@@ -125,6 +128,10 @@ public class HTTPClientConfig implements Configuration {
 		return retryHandler;
 	}
 
+	public boolean getEnableCompression() {
+	    return enableCompression;
+	}
+	
 	/**
 	 * Use the builder to create a new instance of {@link HTTPClientConfig}.
 	 * 
@@ -172,10 +179,14 @@ public class HTTPClientConfig implements Configuration {
 	 * <td>maxConnections</td>
 	 * <td>null (will then use the HttpClient default which is a max of *2*)</td>
 	 * </tr>
-	 * <tr>
-	 * <td>httpRequestRetryHandler</td>
-	 * <td>null (will use the HttpClient default)</td>
-	 * </tr>
+     * <tr>
+     * <td>httpRequestRetryHandler</td>
+     * <td>null (will use the HttpClient default)</td>
+     * </tr>
+     * <tr>
+     * <td>compression</td>
+     * <td>false (will not use compression)</td>
+     * </tr>
 	 * </table>
 	 * 
 	 */
@@ -190,6 +201,7 @@ public class HTTPClientConfig implements Configuration {
 		private Integer timeout = null;
 		private Integer maxConnections = null;
 		private HttpRequestRetryHandler retryHandler = null;
+		private boolean enableCompression = false;
 
 		/**
 		 * @return a {@link HTTPClientConfig}
@@ -208,7 +220,7 @@ public class HTTPClientConfig implements Configuration {
 				builderUrl = uri.toString();
 			}
 
-			return new HTTPClientConfig(builderUrl, mapreducePath, httpClient, timeout, maxConnections, retryHandler);
+			return new HTTPClientConfig(builderUrl, mapreducePath, httpClient, timeout, maxConnections, retryHandler, enableCompression);
 		}
 
 		/**
@@ -228,6 +240,7 @@ public class HTTPClientConfig implements Configuration {
 			b.timeout = copyConfig.timeout;
 			b.maxConnections = copyConfig.maxConnections;
 			b.retryHandler = copyConfig.retryHandler;
+			b.enableCompression = copyConfig.enableCompression;
 
 			// This avoids the new builder from being unchangable due to
 			// the withUrl() method taking precendent
@@ -391,6 +404,15 @@ public class HTTPClientConfig implements Configuration {
 		public Builder withRetryHandler(HttpRequestRetryHandler retryHandler) {
 			this.retryHandler = retryHandler;
 			return this;
+		}
+		
+		/**
+		 * Enable HTTP Compression (via Accept-Encoding: gzip)
+		 * @return
+		 */
+		public Builder withCompression() {
+		    this.enableCompression = true;
+		    return this;
 		}
 	}
 }

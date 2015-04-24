@@ -36,6 +36,7 @@ public class RiakConfig {
     private HttpClient httpClient = null;
     private Integer timeout = null;
     private Integer maxConnections = null;
+    private Boolean enableCompression = null;
     private HttpRequestRetryHandler retryHandler = null;
 
     public RiakConfig() {}
@@ -122,6 +123,14 @@ public class RiakConfig {
         return baseUrl;
     }
 
+    public void setEnableCompression(Boolean enableCompression) {
+        this.enableCompression = enableCompression;
+    }
+    
+    public Boolean getEnableCompression() {
+        return enableCompression;
+    }
+    
     /**
      * The path to the Riak map reduce resource, which defaults to /mapred
      */

@@ -116,6 +116,7 @@ public class HTTPClientAdapter implements RawClient {
             fetchMeta = new FetchMeta(fetchMeta.getR(), fetchMeta.getPr(), fetchMeta.getNotFoundOK(),
                                       fetchMeta.getBasicQuorum(), true, fetchMeta.getReturnDeletedVClock(),
                                       fetchMeta.getIfModifiedSince(), fetchMeta.getIfModifiedVClock(),
+                                      fetchMeta.getCompressionEnabled(),
                                       fetchMeta.getTimeout());
         }
 

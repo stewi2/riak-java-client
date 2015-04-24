@@ -15,6 +15,7 @@ package com.basho.riak.client.raw;
 
 import com.basho.riak.client.cap.Quora;
 import com.basho.riak.client.cap.Quorum;
+
 import java.util.Date;
 
 import com.basho.riak.client.cap.VClock;
@@ -36,6 +37,7 @@ public class FetchMeta {
     private final VClock ifModifiedVClock;
     private final Date ifModifiedSince;
     private final Integer timeout;
+    private final Boolean compression;
 
     /**
      * Create a fetch meta with the specified parameters for a conditional fetch
@@ -61,9 +63,12 @@ public class FetchMeta {
      *            a vclock for conditional get. Not null value means only return
      *            a value if the current vclock does not match this one. *NOTE*
      *            Only for PB API!
+     * @compression compression 
+     *            use gzip HTTP wire compression. *NOTE*
+     *            Only for HTTP API!
      */
     public FetchMeta(Integer r, Integer pr, Boolean notFoundOK, Boolean basicQuorum, Boolean headOnly,
-            Boolean returnDeletedVClock, Date ifModifiedSince, VClock ifModifiedVClock, Integer timeout) {
+            Boolean returnDeletedVClock, Date ifModifiedSince, VClock ifModifiedVClock, Boolean compression, Integer timeout) {
         
         // A lot of the old code depends on r and pr being returned as null if
         // they aren't set / passed in as null
@@ -75,6 +80,7 @@ public class FetchMeta {
               returnDeletedVClock,
               ifModifiedSince,
               ifModifiedVClock,
+              compression,
               timeout
             );
         
@@ -104,9 +110,12 @@ public class FetchMeta {
      *            a vclock for conditional get. Not null value means only return
      *            a value if the current vclock does not match this one. *NOTE*
      *            Only for PB API!
+     * @compression compression 
+     *            use gzip HTTP wire compression. *NOTE*
+     *            Only for HTTP API!
      */
     public FetchMeta(Quorum r, Quorum pr, Boolean notFoundOK, Boolean basicQuorum, Boolean headOnly,
-            Boolean returnDeletedVClock, Date ifModifiedSince, VClock ifModifiedVClock, Integer timeout) {
+            Boolean returnDeletedVClock, Date ifModifiedSince, VClock ifModifiedVClock, Boolean compression, Integer timeout) {
         
         this.r = r;
         this.pr = pr;
@@ -117,6 +126,7 @@ public class FetchMeta {
         this.returnDeletedVClock = returnDeletedVClock;
         this.ifModifiedVClock = ifModifiedVClock;
         this.ifModifiedSince = ifModifiedSince;
+        this.compression = compression;
         this.timeout = timeout;
     }
     
@@ -222,6 +232,17 @@ public class FetchMeta {
         return ifModifiedSince;
     }
 
+    public boolean hasCompressionEnabled() {
+        return compression != null;
+    }
+    
+    /**
+     * @return true if HTTP compression is enable
+     */
+    public Boolean getCompressionEnabled() {
+        return compression;
+    }
+    
     /**
      * Returns true if the timeout parameter is set, otherwise false
      * @return if the timeout is set or not
@@ -245,7 +266,7 @@ public class FetchMeta {
      * @return a {@link FetchMeta} with just an R value
      */
     public static FetchMeta withR(int readQuorum) {
-        return new FetchMeta(readQuorum, null, null, null, null, null, null, null, null);
+        return new FetchMeta(readQuorum, null, null, null, null, null, null, null, null,null);
     }
 
     // Builder
@@ -258,6 +279,7 @@ public class FetchMeta {
         private Boolean returnDeletedVClock;
         private VClock vclock;
         private Date modifiedSince;
+        private Boolean compression;
         private Integer timeout;
 
         public static Builder from(FetchMeta fm) {
@@ -269,11 +291,12 @@ public class FetchMeta {
             b.returnDeletedVClock = fm.getReturnDeletedVClock();
             b.vclock = fm.getIfModifiedVClock();
             b.modifiedSince = fm.getIfModifiedSince();
+            b.compression = fm.hasCompressionEnabled();
             return b;
         }
 
         public FetchMeta build() {
-            return new FetchMeta(r, pr, notFoundOK, basicQuorum, headOnly, returnDeletedVClock, modifiedSince, vclock, timeout);
+            return new FetchMeta(r, pr, notFoundOK, basicQuorum, headOnly, returnDeletedVClock, modifiedSince, vclock, compression, timeout);
         }
 
         public Builder r(int r) {
@@ -336,6 +359,11 @@ public class FetchMeta {
             return this;
         }
         
+        public Builder enableCompression(boolean enableCompression) {
+            this.compression = enableCompression;
+            return this;
+        }
+        
         public Builder timeout(int timeout) {
             this.timeout = timeout;
             return this;
@@ -347,6 +375,7 @@ public class FetchMeta {
      */
     public static FetchMeta head() {
         // Cast first null to Quorum to avoid ambiguous constructor problem
-        return new FetchMeta((Quorum)null, null, null, null, true, null, null, null, null);
+        return new FetchMeta((Quorum)null, null, null, null, true, null, null, null, null, null);
     }
+
 }

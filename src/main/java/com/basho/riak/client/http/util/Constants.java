@@ -57,6 +57,7 @@ public interface Constants {
 
     // HTTP headers used in Riak
     public static String HDR_ACCEPT = "accept";
+    public static String HDR_ACCEPT_ENCODING = "accept-encoding";
     public static String HDR_CLIENT_ID = "x-riak-clientid";
     public static String HDR_CONNECTION = "connection";
     public static String HDR_CONTENT_LENGTH = "content-length";
@@ -109,6 +110,10 @@ public interface Constants {
     public static String QP_ASIS = "asis";
     public static String QP_TIMEOUT = "timeout";
 
+    // Compression Header
+    public static String COMPRESS_GZIP = "gzip";
+    public static String COMPRESS_DEFLATE = "deflate";
+    
     // HTTP method names
     public static String HTTP_HEAD_METHOD = "HEAD";
     public static String HTTP_GET_METHOD = "GET";

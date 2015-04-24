@@ -721,6 +721,10 @@ public final class ConversionUtil {
             rm.setIfModifiedSince(fetchMeta.getIfModifiedSince());
         }
         
+        if (fetchMeta.hasCompressionEnabled() && fetchMeta.getCompressionEnabled()) {
+            rm.setHeader(Constants.HDR_ACCEPT_ENCODING, Constants.COMPRESS_GZIP);
+        }
+        
         if (fetchMeta.hasTimeout()) {
             rm.setTimeout(fetchMeta.getTimeout());
         }
@@ -733,7 +737,7 @@ public final class ConversionUtil {
             return null;
         }
         RequestMeta rm = convert(new FetchMeta(deleteMeta.getR(), deleteMeta.getPr(), null, null, null, null, null,
-                                               null, deleteMeta.getTimeout()));
+                                               null, null, deleteMeta.getTimeout()));
 
         if (deleteMeta.hasW()) {
             if (deleteMeta.getW().isSymbolic())

@@ -349,6 +349,16 @@ public class MultiFetchObject<T> implements RiakOperation<List<MultiFetchFuture<
     }
 
     /**
+     * Causes the client to request HTTP response body compression
+     * @return this
+     * @see com.basho.riak.client.raw.FetchMeta.Builder#enableCompression(boolean enable_compression)
+     */
+    public MultiFetchObject<T> withCompression() {
+        builder.enableCompression(true);
+        return this;
+    }
+
+    /**
      * A {@link Converter} to use to convert the data fetched to some other type
      * @param converter
      * @return this
